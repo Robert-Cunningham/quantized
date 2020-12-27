@@ -1,0 +1,6 @@
+{
+  "name": "quantized",
+  "version": "0.0.1",
+  "main": "index.ts",
+  "repository": "https://github.com/Robert-Cunningham/quantized",
+}
