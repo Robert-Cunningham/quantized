@@ -31,7 +31,7 @@ export enum answer_type {
     trust = "@general/trust"
 }
 
-export const initCard = (front: string, back: string, id: string, tags: string[], answer: Answer): Card => {
+export const initCard = (front: string, back: string, id: QuantaID, tags: string[], answer: Answer): Card => {
     return {
         front, back, answer, tags, id
     }
@@ -48,7 +48,7 @@ export class Deck {
         this.cards = []
         this.name = `${namespace}/${deck_name}`
 
-        this.tagManager.setTag(0, this.tagManager.newDeckTag(name))
+        this.tagManager.setTag(0, this.tagManager.newDeckTag(this.name))
 
         if (!meta.modified) {
             meta.modified = Date.now() + ''
@@ -61,8 +61,8 @@ export class Deck {
         this.meta = meta;
     }
 
-    addCard(front: string, back: string, id: string, answer: Answer) {
-        const card = initCard(front, back, toID(name + id), this.tagManager.getCurrentTagIDs(), answer)
+    addCard(front: string, back: string, id: QuantaID, answer: Answer) {
+        const card = initCard(front, back, id, this.tagManager.getCurrentTagIDs(), answer)
         this.cards.push(card)
     }
 
