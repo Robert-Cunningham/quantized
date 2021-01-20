@@ -1,6 +1,6 @@
-import { initDeck, answer_type } from './index'
+import { answer_type, Deck } from './index'
 
-const { writeDeck, addCard, ..._ } = initDeck('robert-cunningham', 'test-deck', 'Test Deck', { version: '0' })
+const d = new Deck('robert-cunningham', 'test-deck', 'Test Deck', { version: '0' })
 
-addCard('front\n\n test \n \n more front \n yo sup', 'cool back yo', 'asd', { type: answer_type.acknowledge })
-writeDeck()
+d.addCard('front\n\n test \n \n more front \n yo sup', 'cool back yo', 'asd', { type: answer_type.acknowledge })
+d.writeDeck()

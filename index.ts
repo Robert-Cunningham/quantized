@@ -3,6 +3,7 @@ import fs from 'fs'
 import _ from 'lodash'
 import { TagManager } from './tags'
 import { toID } from './utils'
+import hash from 'object-hash'
 
 export interface Card {
     front: string,
@@ -12,16 +13,14 @@ export interface Card {
     answer: Answer
 }
 
-export interface Deck {
-    cards: Card[]
-}
-
 export interface Meta {
     author?: string | string[],
     version: string,
     modified?: string,
     name?: string,
 }
+
+export type QuantaID = string;
 
 export type Answer = { type: answer_type.text_precise, value: string } | { type: answer_type.acknowledge } | { type: answer_type.multiple_choice, options: string[] } | { type: answer_type.trust }
 
@@ -38,35 +37,52 @@ export const initCard = (front: string, back: string, id: string, tags: string[]
     }
 }
 
-export const initDeck = (namespace: string, deck_name: string, human_name: string, meta: Meta) => {
-    const name = `${namespace}/${deck_name}`
+export class Deck {
+    tagManager: TagManager;
+    cards: Card[];
+    name: string;
+    meta: Meta;
 
-    const tm = new TagManager()
+    constructor(namespace: string, deck_name: string, human_name: string, meta: Meta) {
+        this.tagManager = new TagManager()
+        this.cards = []
+        this.name = `${namespace}/${deck_name}`
 
-    tm.setTag(0, tm.newDeckTag(name))
+        this.tagManager.setTag(0, this.tagManager.newDeckTag(name))
 
-    if (!meta.modified) {
-        meta.modified = Date.now() + ''
+        if (!meta.modified) {
+            meta.modified = Date.now() + ''
+        }
+
+        if (!meta.name) {
+            meta.name = human_name
+        }
+
+        this.meta = meta;
     }
 
-    if (!meta.name) {
-        meta.name = human_name
+    addCard(front: string, back: string, id: string, answer: Answer) {
+        const card = initCard(front, back, toID(name + id), this.tagManager.getCurrentTagIDs(), answer)
+        this.cards.push(card)
     }
 
-    const cards: any[] = []
-
-    const addCard = (front: string, back: string, id: string, answer: Answer) => {
-        const card = initCard(front, back, toID(name + id), tm.getCurrentTagIDs(), answer)
-        cards.push(card)
+    writeDeck(path?: string) {
+        fs.writeFileSync(path || 'quanta.yaml', yaml.safeDump({ meta: this.meta, tags: this.tagManager.getAllTags(), cards: this.cards }))
     }
 
-    const writeDeck = (path?: string) => {
-        fs.writeFileSync(path || 'quanta.yaml', yaml.safeDump({ meta, tags: tm.getAllTags(), cards }))
+    setTag(level: number, name: string) {
+        this.tagManager.makeAndSetTag(level, name)
+    }
+}
+
+export class Task<T> {
+    name: string;
+
+    constructor(name: string) {
+        this.name = name
     }
 
-    const setTag = (level: number, name: string) => {
-        tm.makeAndSetTag(level, name)
+    getID(identifier: T): QuantaID {
+        return toID(hash({ task: identifier }))
     }
-
-    return { writeDeck, addCard, deckID: name, setTag }
 }
