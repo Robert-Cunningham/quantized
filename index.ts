@@ -1,54 +1,67 @@
 import yaml from 'js-yaml'
 import fs from 'fs'
 import _ from 'lodash'
-import { TagManager } from './tags'
+import { TagManager, Tag, TagDecoration } from './tags'
 import { toID } from './utils'
 import hash from 'object-hash'
+import { trust, writeCardToDisk } from './answers'
 
+export { Tag, trust, writeCardToDisk, TagDecoration }
 export interface Card {
-    front: string,
-    back: string,
-    id: string,
-    tags: string[],
+    front: string
+    back: string
+    id: string
+    tags: string[]
     answer: Answer
 }
 
 export interface Meta {
-    author?: string | string[],
-    version: string,
-    modified?: string,
-    name?: string,
+    author?: string | string[]
+    version: string
+    modified?: string
+    name?: string
+    description?: string
+    image?: string
 }
 
-export type QuantaID = string;
+export type QuantaID = string
 
-export type Answer = { type: answer_type.text_precise, value: string } | { type: answer_type.acknowledge } | { type: answer_type.multiple_choice, options: string[] } | { type: answer_type.trust }
+export type Answer =
+    | { type: answer_type.text_precise; value: string }
+    | { type: answer_type.acknowledge }
+    | { type: answer_type.multiple_choice; options: string[] }
+    | { type: answer_type.trust }
 
 export enum answer_type {
-    text_precise = "@general/text/precise",
-    acknowledge = "@general/acknowledge",
-    multiple_choice = "@general/select",
-    trust = "@general/trust"
+    text_precise = '@general/text/precise',
+    acknowledge = '@general/acknowledge',
+    multiple_choice = '@general/select',
+    trust = '@general/trust',
 }
 
 export const initCard = (front: string, back: string, id: QuantaID, tags: string[], answer: Answer): Card => {
     return {
-        front, back, answer, tags, id
+        front,
+        back,
+        answer,
+        tags,
+        id,
     }
 }
 
 export class Deck {
-    tagManager: TagManager;
-    cards: Card[];
-    name: string;
-    meta: Meta;
+    tagManager: TagManager
+    cards: Card[]
+    name: string
+    meta: Meta
 
-    constructor(namespace: string, deck_name: string, human_name: string, meta: Meta) {
+    constructor(namespace: string, deck_name: string, human_name: string, meta: Meta, decoration: TagDecoration) {
         this.tagManager = new TagManager()
         this.cards = []
         this.name = `${namespace}/${deck_name}`
 
-        this.tagManager.setTag(0, this.tagManager.newDeckTag(this.name))
+        const parentTag = this.tagManager.newDeckTag(this.name)
+        this.tagManager.setTag(0, { ...parentTag, ...decoration })
 
         if (!meta.modified) {
             meta.modified = Date.now() + ''
@@ -58,7 +71,7 @@ export class Deck {
             meta.name = human_name
         }
 
-        this.meta = meta;
+        this.meta = meta
     }
 
     addCard(front: string, back: string, id: QuantaID, answer: Answer) {
@@ -67,7 +80,14 @@ export class Deck {
     }
 
     writeDeck(path?: string) {
-        fs.writeFileSync(path || 'quanta.yaml', yaml.safeDump({ meta: this.meta, tags: this.tagManager.getAllTags(), cards: this.cards }))
+        fs.writeFileSync(
+            path || 'quanta.yaml',
+            yaml.safeDump({
+                meta: this.meta,
+                tags: this.tagManager.getAllTags(),
+                cards: this.cards,
+            })
+        )
     }
 
     setTag(level: number, name: string) {
@@ -75,14 +95,31 @@ export class Deck {
     }
 }
 
+/*
+export class DeckBuilder {
+    authors: string[] | undefined = undefined
+    modified: string | undefined = undefined
+    version: string | undefined = undefined
+
+    constructor() {}
+
+    setAuthors(authors: string[]) {
+        this.authors = authors
+    }
+
+    build(): Deck {
+        return new Deck()
+    }
+}
+*/
 export class Task<T> {
-    name: string;
+    name: string
 
     constructor(name: string) {
         this.name = name
     }
 
     getID(identifier: T): QuantaID {
-        return toID(hash({ task: identifier }))
+        return toID(hash({ task: this.name, instance: identifier }))
     }
 }

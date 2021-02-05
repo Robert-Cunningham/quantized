@@ -1,30 +1,39 @@
 import _ from 'lodash'
-import { toID } from './utils';
+import { toID } from './utils'
 
-type TagID = string;
+type TagID = string
 
 type TagLevel = number
 
 export interface Tag {
     id: string
     parent: string | null
+    visible?: boolean
+    standalone?: boolean
 }
 
-const NO_PARENT = ""
+export interface TagDecoration {
+    title?: string
+    description?: string
+    flavor?: string
+    image?: string
+    price?: string
+    faq?: { question: string; answer: string }[]
+}
+
+const NO_PARENT = ''
 
 export class TagManager {
     currentTags: Partial<Record<TagLevel, TagID>> = {} // #: asdf, ##: ldjkflasjkdfl
     tagsDb: Record<TagID, Tag> = {}
 
-    constructor() {
-
-    }
+    constructor() {}
 
     getCurrentTagIDs(): TagID[] {
         //const sorted: [TagLevel, TagID][] = _.sortBy(_.values(this.currentTags), )
         //return sorted
         //.map(([_, id]: [TagLevel, TagID]) => id)
-        return _.values(this.currentTags).filter(x => x) as string[]
+        return _.values(this.currentTags).filter((x) => x) as string[]
     }
 
     getAllTags(): Record<TagID, Tag> {
@@ -38,10 +47,12 @@ export class TagManager {
     }
 
     clearThroughLevel(level: TagLevel) {
-        let levels: TagLevel[] = Object.keys(this.currentTags).map(x => parseInt(x))
-        levels.filter((x: TagLevel) => x >= level).forEach(levelToClear => {
-            delete this.currentTags[levelToClear]
-        })
+        let levels: TagLevel[] = Object.keys(this.currentTags).map((x) => parseInt(x))
+        levels
+            .filter((x: TagLevel) => x >= level)
+            .forEach((levelToClear) => {
+                delete this.currentTags[levelToClear]
+            })
     }
 
     newTag(id: string, level: TagLevel, name: string): Tag {
@@ -52,7 +63,7 @@ export class TagManager {
             parents: parentList,
             level: level,
             parent: _.last(parentList) || NO_PARENT,
-            name
+            name,
         }
 
         return out
@@ -66,10 +77,10 @@ export class TagManager {
 
     newDeckTag(deck_name: string): Tag {
         const allTag = {
-            id: toID(deck_name + "parent_tag"),
+            id: toID(deck_name + 'parent_tag'),
             visible: true,
             standalone: true,
-            parent: null
+            parent: null,
         }
 
         this.tagsDb[allTag.id] = allTag
