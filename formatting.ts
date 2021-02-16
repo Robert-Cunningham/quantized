@@ -1,4 +1,16 @@
-const standardFormat = (HTMLFields: string[], HTMLAnswer: string) => {
+export const injectReact = (react: string) => `
+<script src="https://unpkg.com/react@17/umd/react.development.js"></script>
+<script src="https://unpkg.com/react-dom@17/umd/react-dom.development.js"></script>
+<script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+<div id="root"></div>
+<script type="text/babel">
+    ${react}
+
+    ReactDOM.render(<App/>, document.getElementById('root'));
+</script>
+`
+
+export const standardFormat = (HTMLFields: string[], HTMLAnswer: string) => {
     const out = `
 <html>
     <head>
@@ -34,6 +46,12 @@ const standardFormat = (HTMLFields: string[], HTMLAnswer: string) => {
                 padding: 10px;
                 color: #FFFFFF;
             }
+            input {
+                width: 100%;
+                padding: 10px;
+                border: lightgrey 1px solid;
+            }
+            body, html {height: 100%; }
         </style>
     </head>
 
@@ -47,42 +65,38 @@ const standardFormat = (HTMLFields: string[], HTMLAnswer: string) => {
     </body>
 </html>
     `
-
-    return out.split(/\s+/g).join(' ')
 }
-
-/*
-            button {
-             display:inline-block;
-             padding:0.6em 2.4em;
-             margin:0 0.1em 0.1em 0;
-             border:0.16em solid rgba(255,255,255,0);
-             border-radius:4em;
-             box-sizing: border-box;
-             text-decoration:none;
-             font-family:'Roboto',sans-serif;
-             font-weight:300;
-             color:#FFFFFF;
-             text-shadow: 0 0.04em 0.04em rgba(0,0,0,0.35);
-             text-align:center;
-             transition: all 0.2s;
-            }
-            button:hover {
-             border-color: rgba(255,255,255,1);
-            }
-            */
 
 //button onClick='window.top.postMessage({"answer":"correct"}, "*");'
 
-const genericButton = (color: string, text: string, onclickMessage: object) =>
-    `<button style='background-color:${color}' onclick='window.top.postMessage(${JSON.stringify(
-        onclickMessage
-    )}, "*");'>${text}</button>`
+const genericButton = (color: string, text: string, onclickMessage: object | string) =>
+    `<button style='background-color:${color}' onclick='window.top.postMessage(${
+        typeof onclickMessage === 'object' ? JSON.stringify(onclickMessage) : onclickMessage
+    }, "*");'>${text}</button>`
+
+export const genericTextBox = (correctAnswer: string) =>
+    `<html><input type='text' placeholder='Type your answer here' autofocus
+    oninput='window.top.postMessage({"action": "type", "value": this.value}, "*");'
+    onchange='window.top.postMessage({"action": "submit", "value": this.value, "answer": this.value === "${correctAnswer}" ? "correct" : "incorrect"}, "*");
+    window.top.postMessage({"action": "flip"}, "*");
+    window.correct = this.value === "${correctAnswer}";'
+    ></input></html>`
+
+export const genericTextBoxBack = () =>
+    `  
+<script></script>
+${genericButton('#7a7682', 'Next', "{answer: window.correct ? 'incorrect' : 'correct'}")}
+`
 
 //console.log(standardFormat(['a', 'b', 'c'], '<button style="background-color:#f14e4e" onclick=">Test Button</button>'))
-const trustAnswer = [
+export const trustAnswerBack = [
     genericButton('#f14e4e', 'Wrong', { answer: 'incorrect' }),
     genericButton('#71f14e', 'Correct', { answer: 'correct' }),
 ].join('\n')
 
-console.log(standardFormat(['a', 'b', 'c'], trustAnswer))
+export const trustAnswerFront = genericButton('#7a7682', 'Show Answer', { action: 'flip' })
+
+export const answerTypeBack = null
+
+export const trustTypeFront = genericButton('#7a7682', 'Show Answer', { action: 'flip' })
+//console.log(standardFormat(['a', 'b', 'c'], genericTextBox('right')))

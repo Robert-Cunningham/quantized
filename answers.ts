@@ -1,30 +1,30 @@
-import * as fs from "fs";
-import { encode } from "html-entities";
+import * as fs from 'fs'
+import { encode } from 'html-entities'
+import { genericTextBox, genericTextBoxBack } from './formatting'
 
-const postMessage = (object: object) =>
-  `window.top.postMessage(${JSON.stringify(object)}, "*");`;
+const postMessage = (object: object) => `window.top.postMessage(${JSON.stringify(object)}, "*");`
 
 export const trust = () => {
-  const front = `
+    const front = `
     <button onClick='${postMessage({
-      action: "flip",
+        action: 'flip',
     })}'>Special button</button>
-    `;
+    `
 
-  const back = `
-    <button onClick='${(postMessage({
-      answer: "correct",
-    }))}'>Right</button>
+    const back = `
     <button onClick='${postMessage({
-      answer: "incorrect",
+        answer: 'correct',
+    })}'>Right</button>
+    <button onClick='${postMessage({
+        answer: 'incorrect',
     })}'>Wrong</button>
-    `;
+    `
 
-  return { front, back };
-};
+    return { front, back }
+}
 
 export const writeCardToDisk = (card: { front: string; back: string }) => {
-  const out = `
+    const out = `
     <html>
     <script>
         window.addEventListener("message", event => { console.log(event.data); });
@@ -34,9 +34,9 @@ export const writeCardToDisk = (card: { front: string; back: string }) => {
     <iframe srcDoc="${card.back}"></iframe>
     </body>
     </html>
-    `;
+    `
 
-  fs.writeFileSync("./test.html", out);
-};
+    fs.writeFileSync('./test.html', out)
+}
 
-writeCardToDisk(trust());
+writeCardToDisk({ front: encode(genericTextBox('right')), back: genericTextBoxBack() })

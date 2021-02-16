@@ -5,15 +5,35 @@ import { TagManager, Tag, TagDecoration } from './tags'
 import { toID } from './utils'
 import hash from 'object-hash'
 import { trust, writeCardToDisk } from './answers'
+import { standardFormat, trustAnswerBack, trustAnswerFront } from './formatting'
+import { standardTrustCard, makeCardFromTemplateHTML } from './templates'
 
-export { Tag, trust, writeCardToDisk, TagDecoration }
-export interface Card {
+export {
+    Tag,
+    trust,
+    writeCardToDisk,
+    TagDecoration,
+    standardFormat,
+    trustAnswerBack,
+    trustAnswerFront,
+    standardTrustCard,
+    makeCardFromTemplateHTML,
+}
+export interface OGCard {
     front: string
     back: string
     id: string
     tags: string[]
     answer: Answer
 }
+
+export interface SourceCard {
+    source: string
+    id: string
+    tags: string[]
+}
+
+export type Card = SourceCard | OGCard
 
 export interface Meta {
     author?: string | string[]
@@ -49,6 +69,16 @@ export const initCard = (front: string, back: string, id: QuantaID, tags: string
     }
 }
 
+export const initSourceCard = (data: { source: string; front?: string; back?: string }, id: QuantaID, tags: string[]): Card => {
+    return {
+        source: data.source,
+        front: data.front,
+        back: data.back,
+        tags,
+        id,
+    }
+}
+
 export class Deck {
     tagManager: TagManager
     cards: Card[]
@@ -79,19 +109,36 @@ export class Deck {
         this.cards.push(card)
     }
 
+    addSourceCard(data: { source: string; front?: string; back?: string }, id: QuantaID) {
+        const card = initSourceCard(data, id, this.tagManager.getCurrentTagIDs())
+        this.cards.push(card)
+    }
+
     writeDeck(path?: string) {
         fs.writeFileSync(
             path || 'quanta.yaml',
-            yaml.safeDump({
-                meta: this.meta,
-                tags: this.tagManager.getAllTags(),
-                cards: this.cards,
-            })
+            yaml.safeDump(
+                {
+                    meta: this.meta,
+                    tags: this.tagManager.getAllTags(),
+                    cards: this.cards,
+                },
+                { lineWidth: 100000 }
+            )
         )
     }
 
     setTag(level: number, name: string) {
         this.tagManager.makeAndSetTag(level, name)
+    }
+
+    writeDemo() {
+        //@ts-ignore
+        fs.writeFileSync('demo1.html', _.sample(this.cards).source)
+        //@ts-ignore
+        fs.writeFileSync('demo2.html', _.sample(this.cards).source)
+        //@ts-ignore
+        fs.writeFileSync('demo3.html', _.sample(this.cards).source)
     }
 }
 
