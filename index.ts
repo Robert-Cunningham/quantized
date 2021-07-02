@@ -3,10 +3,11 @@ import fs from 'fs'
 import _ from 'lodash'
 import { TagManager, Tag, TagDecoration } from './tags'
 import { toID } from './utils'
-import hash from 'object-hash'
 import { trust, writeCardToDisk } from './answers'
 import { standardFormat, trustAnswerBack, trustAnswerFront } from './formatting'
-import { standardTrustCard, makeCardFromTemplateHTML } from './templates'
+import { standardTrustCard, makeCardFromTemplateHTML, standardIntroCard } from './templates'
+import stringify from 'json-stable-stringify'
+import hash from 'object-hash'
 
 export {
     Tag,
@@ -17,6 +18,7 @@ export {
     trustAnswerBack,
     trustAnswerFront,
     standardTrustCard,
+    standardIntroCard,
     makeCardFromTemplateHTML,
 }
 export interface OGCard {
@@ -42,6 +44,7 @@ export interface Meta {
     name?: string
     description?: string
     image?: string
+    ready?: boolean
 }
 
 export type QuantaID = string
@@ -91,6 +94,7 @@ export class Deck {
         this.name = `${namespace}/${deck_name}`
 
         const parentTag = this.tagManager.newDeckTag(this.name)
+        parentTag.visible = !!meta.ready
         this.tagManager.setTag(0, { ...parentTag, ...decoration })
 
         if (!meta.modified) {
@@ -114,18 +118,42 @@ export class Deck {
         this.cards.push(card)
     }
 
+    checkNoDupes() {
+        if (_.uniqBy(this.cards, (x: Card) => x.id).length !== this.cards.length) {
+            console.log("There's a duplicate ID!")
+            throw 'wtf'
+        }
+    }
+
     writeDeck(path?: string) {
-        fs.writeFileSync(
-            path || 'quanta.yaml',
-            yaml.safeDump(
-                {
-                    meta: this.meta,
-                    tags: this.tagManager.getAllTags(),
-                    cards: this.cards,
-                },
-                { lineWidth: 100000 }
-            )
-        )
+        this.checkNoDupes()
+        const yamlObj = {
+            meta: this.meta,
+            tags: this.tagManager.getAllTags(),
+            cards: this.cards,
+        }
+        /*
+        if (JSON.stringify(yamlObj).toLowerCase().includes('undefined')) {
+            console.error('Some part of yaml is undefined.')
+            console.log(JSON.stringify(yamlObj, null, 2))
+        }
+        */
+        fs.writeFileSync(path || 'quanta.yaml', yaml.safeDump(yamlObj, { lineWidth: 100000 }))
+
+        try {
+            fs.mkdirSync('cards')
+        } catch {}
+
+        let out: string[] = []
+
+        this.cards.forEach((c, i) => {
+            if ('source' in c) {
+                //fs.writeFileSync(`cards/${(i + '').padStart(4, '0')}-${c.id}.html`, c.source)
+                fs.writeFileSync(`cards/${c.id}.html`, c.source)
+                out.push(`<iframe width="800px" height="800px" src="cards/${(i + '').padStart(4, '0')}-${c.id}.html"></iframe>`)
+            }
+        })
+        fs.writeFileSync('all.html', out.join('\n'))
     }
 
     setTag(level: number, name: string) {
@@ -167,6 +195,12 @@ export class Task<T> {
     }
 
     getID(identifier: T): QuantaID {
+        const obj = { task: this.name, instance: identifier }
+        const str = stringify(obj, (a, b): number => (a.key > b.key ? 1 : -1))
+        return toID(str)
+    }
+
+    getOldID(identifier: T): QuantaID {
         return toID(hash({ task: this.name, instance: identifier }))
     }
 }

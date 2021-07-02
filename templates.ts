@@ -1,5 +1,6 @@
 import * as fs from 'fs'
 import { minify } from 'html-minifier-terser'
+import { forInRight } from 'lodash'
 
 export const makeCardFromTemplateHTML = (dict: Record<string, string>, html: string) => {
     const templateNames = html.match(/TEMPLATE_(\w+)/g)
@@ -24,8 +25,14 @@ export const standardTrustCard = (
     backElements: string[],
     other?: { meta?: string; onRender?: string }
 ) => {
-    const front = `<div class="parent"> ${frontElements.map((h) => `<div class="item">${h}</div>`).join('\n')}</div>`
-    const back = `<div class="parent"> ${backElements.map((h) => `<div class="item">${h}</div>`).join('\n')}</div>`
+    const front = `<div class="parent"> ${frontElements
+        .filter((x) => x)
+        .map((h) => `<div class="item">${h}</div>`)
+        .join('\n')}</div>`
+    const back = `<div class="parent"> ${backElements
+        .filter((x) => x)
+        .map((h) => `<div class="item">${h}</div>`)
+        .join('\n')}</div>`
     return {
         source: makeCardFromTemplate(
             {
@@ -41,9 +48,38 @@ export const standardTrustCard = (
     }
 }
 
+export const standardIntroCard = (title: string, subtext: string) => {
+    const front = `
+    <div class="parent">
+    <div class="item"><h1>${title || ''}</h1></div>
+    <div class="item">${subtext || ''}</div>
+    </div>
+    `
+
+    return {
+        source: makeCardFromTemplate(
+            {
+                TEMPLATE_FRONT_CONTENT: front,
+                TEMPLATE_HEAD_CONTENT: '',
+                TEMPLATE_ONRENDER: '',
+            },
+            'acknowledge'
+        ),
+        front: title + '\n\n' + subtext,
+        back: 'This card has no back.',
+    }
+}
+
 export const standardTypeCard = (frontElements: string[], backElements: string[], answer: string, meta?: string) => {
-    const front = `<div class="parent"> ${frontElements.map((h) => `<div class="item">${h}</div>`).join('\n')}</div>`
-    const back = `<div class="parent"> ${backElements.map((h) => `<div class="item">${h}</div>`).join('\n')}</div>` + (meta || '')
+    const front = `<div class="parent"> ${frontElements
+        .filter((x) => x)
+        .map((h) => `<div class="item">${h}</div>`)
+        .join('\n')}</div>`
+    const back =
+        `<div class="parent"> ${backElements
+            .filter((x) => x)
+            .map((h) => `<div class="item">${h}</div>`)
+            .join('\n')}</div>` + (meta || '')
     return {
         source: makeCardFromTemplate(
             {
