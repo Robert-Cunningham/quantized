@@ -18,6 +18,7 @@ export interface TagDecoration {
     flavor?: string
     image?: string
     price?: string
+    newPerDay?: number
     faq?: { question: string; answer: string }[]
 }
 
