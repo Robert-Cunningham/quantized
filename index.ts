@@ -22,13 +22,6 @@ export {
     standardIntroCard,
     makeCardFromTemplateHTML,
 }
-export interface OGCard {
-    front: string
-    back: string
-    id: string
-    tags: string[]
-    answer: Answer
-}
 
 export interface SourceCard {
     source: string
@@ -36,15 +29,11 @@ export interface SourceCard {
     tags: string[]
 }
 
-export type Card = SourceCard | OGCard
+export type Card = SourceCard
 
 export interface Meta {
-    author?: string | string[]
     version: string
     modified?: string
-    name?: string
-    description?: string
-    image?: string
     ready?: boolean
 }
 
@@ -63,21 +52,9 @@ export enum answer_type {
     trust = '@general/trust',
 }
 
-export const initCard = (front: string, back: string, id: QuantaID, tags: string[], answer: Answer): Card => {
-    return {
-        front,
-        back,
-        answer,
-        tags,
-        id,
-    }
-}
-
-export const initSourceCard = (data: { source: string; front?: string; back?: string }, id: QuantaID, tags: string[]): Card => {
+export const initSourceCard = (data: { source: string }, id: QuantaID, tags: string[]): Card => {
     return {
         source: data.source,
-        front: data.front,
-        back: data.back,
         tags,
         id,
     }
@@ -89,38 +66,31 @@ export class Deck {
     name: string
     meta: Meta
 
-    constructor(namespace: string, deck_name: string, human_name: string, meta: Meta, decoration: TagDecoration) {
+    constructor(namespace: string, deck_name: string, human_name: string, fileMeta: Meta, deckMeta: TagDecoration) {
         this.tagManager = new TagManager()
         this.cards = []
         this.name = `${namespace}/${deck_name}`
 
-        const parentTag = this.tagManager.newDeckTag(this.name)
-        parentTag.visible = !!meta.ready
-        this.tagManager.setTag(0, { ...parentTag, ...decoration })
+        deckMeta.name = deck_name
+        deckMeta.visible = !!fileMeta.ready
 
-        if (!meta.modified) {
-            meta.modified = Date.now() + ''
+        const parentTag = this.tagManager.newDeckTag(this.name, deckMeta)
+        this.tagManager.setTag(0, parentTag)
+
+        if (!fileMeta.modified) {
+            fileMeta.modified = Date.now() + ''
         }
 
-        if (!meta.name) {
-            meta.name = human_name
-        }
-
-        this.meta = meta
+        this.meta = fileMeta
     }
 
-    addCard(front: string, back: string, id: QuantaID, answer: Answer) {
-        const card = initCard(front, back, id, this.tagManager.getCurrentTagIDs(), answer)
-        this.cards.push(card)
-    }
-
-    addSourceCard(data: { source: string; front?: string; back?: string }, id: QuantaID) {
+    addSourceCard(data: { source: string }, id: QuantaID) {
         const card = initSourceCard(data, id, this.tagManager.getCurrentTagIDs())
         this.cards.push(card)
     }
 
     checkNoDupes() {
-        const ids = new Set();
+        const ids = new Set()
         for (const card of this.cards) {
             if (ids.has(card.id)) {
                 throw new Error(`Id: ${card.id} was a duplicate`)
@@ -166,12 +136,9 @@ export class Deck {
     }
 
     writeDemo() {
-        //@ts-ignore
-        fs.writeFileSync('demo1.html', _.sample(this.cards).source)
-        //@ts-ignore
-        fs.writeFileSync('demo2.html', _.sample(this.cards).source)
-        //@ts-ignore
-        fs.writeFileSync('demo3.html', _.sample(this.cards).source)
+        fs.writeFileSync('demo1.html', _.sample(this.cards)!.source)
+        fs.writeFileSync('demo2.html', _.sample(this.cards)!.source)
+        fs.writeFileSync('demo3.html', _.sample(this.cards)!.source)
     }
 }
 

@@ -8,19 +8,22 @@ type TagLevel = number
 export interface Tag {
     id: string
     parent: string | null
-    visible?: boolean
-    standalone?: boolean
+    meta: TagDecoration
 }
 
 export interface TagDecoration {
+    visible?: boolean
+    standalone?: boolean
+    name?: string
     title?: string
     description?: string
     flavor?: string
     image?: string
     price?: string
-    newPerDay?: number
     faq?: { question: string; answer: string }[]
     changelog?: { date: string; info: string; version: string }[]
+
+    author?: string
 }
 
 const NO_PARENT = ''
@@ -62,10 +65,12 @@ export class TagManager {
 
         const out = {
             id: id,
-            parents: parentList,
-            level: level,
+            //parents: parentList,
+            //level: level,
             parent: _.last(parentList) || NO_PARENT,
-            name,
+            meta: {
+                name,
+            },
         }
 
         return out
@@ -77,12 +82,14 @@ export class TagManager {
         this.setTag(level, t)
     }
 
-    newDeckTag(deck_name: string): Tag {
+    newDeckTag(deck_name: string, meta: TagDecoration): Tag {
         const allTag = {
             id: toID(deck_name + 'parent_tag'),
-            visible: true,
-            standalone: true,
             parent: null,
+            meta: {
+                ...meta,
+                standalone: true,
+            },
         }
 
         this.tagsDb[allTag.id] = allTag
