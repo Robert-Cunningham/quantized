@@ -120,9 +120,13 @@ export class Deck {
     }
 
     checkNoDupes() {
-        if (_.uniqBy(this.cards, (x: Card) => x.id).length !== this.cards.length) {
-            console.log("There's a duplicate ID!")
-            throw 'wtf'
+        const ids = new Set();
+        for (const card of this.cards) {
+            if (ids.has(card.id)) {
+                throw new Error(`Id: ${card.id} was a duplicate`)
+            } else {
+                ids.add(card.id)
+            }
         }
     }
 
