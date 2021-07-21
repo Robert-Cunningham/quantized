@@ -8,6 +8,7 @@ import { standardFormat, trustAnswerBack, trustAnswerFront } from './formatting'
 import { standardTrustCard, makeCardFromTemplateHTML, standardIntroCard } from './templates'
 import stringify from 'json-stable-stringify'
 import hash from 'object-hash'
+import seedrandom from 'seedrandom'
 
 export {
     Tag,
@@ -138,7 +139,7 @@ export class Deck {
             console.log(JSON.stringify(yamlObj, null, 2))
         }
         */
-        fs.writeFileSync(path || 'quanta.yaml', yaml.safeDump(yamlObj, { lineWidth: 100000 }))
+        fs.writeFileSync(path || 'quanta.yaml', yaml.dump(yamlObj, { lineWidth: 100000 }))
 
         try {
             fs.mkdirSync('cards')
@@ -203,4 +204,8 @@ export class Task<T> {
     getOldID(identifier: T): QuantaID {
         return toID(hash({ task: this.name, instance: identifier }))
     }
+}
+
+export const setRNGFromQuanta = (id: QuantaID) => {
+    seedrandom(id, { global: true })
 }

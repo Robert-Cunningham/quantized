@@ -19,6 +19,7 @@ export interface TagDecoration {
     image?: string
     price?: string
     faq?: { question: string; answer: string }[]
+    changelog?: { date: string; info: string; version: string }[]
 }
 
 const NO_PARENT = ''
