@@ -113,10 +113,14 @@ export class Deck {
             console.log(JSON.stringify(yamlObj, null, 2))
         }
         */
-        fs.writeFileSync(path || 'quanta.yaml', yaml.dump(yamlObj, { lineWidth: 100000 }))
+        try {
+            fs.mkdirSync('dist')
+        } catch {}
+
+        fs.writeFileSync(path || 'dist/quanta.yaml', yaml.dump(yamlObj, { lineWidth: 100000 }))
 
         try {
-            fs.mkdirSync('cards')
+            fs.mkdirSync('dist/cards')
         } catch {}
 
         let out: string[] = []
@@ -124,11 +128,11 @@ export class Deck {
         this.cards.forEach((c, i) => {
             if ('source' in c) {
                 //fs.writeFileSync(`cards/${(i + '').padStart(4, '0')}-${c.id}.html`, c.source)
-                fs.writeFileSync(`cards/${c.id}.html`, c.source)
+                fs.writeFileSync(`dist/cards/${c.id}.html`, c.source)
                 out.push(`<iframe width="800px" height="800px" src="cards/${(i + '').padStart(4, '0')}-${c.id}.html"></iframe>`)
             }
         })
-        fs.writeFileSync('all.html', out.join('\n'))
+        //fs.writeFileSync('all.html', out.join('\n'))
     }
 
     setTag(level: number, name: string) {
