@@ -3,26 +3,11 @@ import fs from 'fs'
 import _ from 'lodash'
 import { TagManager, Tag, TagDecoration } from './tags'
 import { toID } from './utils'
-import { trust, writeCardToDisk } from './answers'
-import { standardFormat, trustAnswerBack, trustAnswerFront } from './formatting'
-import { standardTrustCard, makeCardFromTemplateHTML, standardIntroCard, makeCardFromTemplate } from './templates'
 import stringify from 'json-stable-stringify'
 import hash from 'object-hash'
 import seedrandom from 'seedrandom'
 
-export {
-    Tag,
-    trust,
-    writeCardToDisk,
-    TagDecoration,
-    standardFormat,
-    trustAnswerBack,
-    trustAnswerFront,
-    standardTrustCard,
-    standardIntroCard,
-    makeCardFromTemplateHTML,
-    makeCardFromTemplate,
-}
+export { Tag, TagDecoration }
 
 export interface SourceCard {
     source: string
@@ -39,19 +24,6 @@ export interface Meta {
 }
 
 export type QuantaID = string
-
-export type Answer =
-    | { type: answer_type.text_precise; value: string }
-    | { type: answer_type.acknowledge }
-    | { type: answer_type.multiple_choice; options: string[] }
-    | { type: answer_type.trust }
-
-export enum answer_type {
-    text_precise = '@general/text/precise',
-    acknowledge = '@general/acknowledge',
-    multiple_choice = '@general/select',
-    trust = '@general/trust',
-}
 
 export const initSourceCard = (data: { source: string }, id: QuantaID, tags: string[]): Card => {
     return {

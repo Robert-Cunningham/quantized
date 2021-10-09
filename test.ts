@@ -1,4 +1,4 @@
-import { answer_type, Deck } from './index'
+import { Deck } from './index'
 
 const d = new Deck('robert-cunningham', 'test-deck', 'Test Deck', { version: '0' }, { flavor: 'hello' })
 
