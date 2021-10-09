@@ -5,7 +5,7 @@ import { TagManager, Tag, TagDecoration } from './tags'
 import { toID } from './utils'
 import { trust, writeCardToDisk } from './answers'
 import { standardFormat, trustAnswerBack, trustAnswerFront } from './formatting'
-import { standardTrustCard, makeCardFromTemplateHTML, standardIntroCard } from './templates'
+import { standardTrustCard, makeCardFromTemplateHTML, standardIntroCard, makeCardFromTemplate } from './templates'
 import stringify from 'json-stable-stringify'
 import hash from 'object-hash'
 import seedrandom from 'seedrandom'
@@ -21,6 +21,7 @@ export {
     standardTrustCard,
     standardIntroCard,
     makeCardFromTemplateHTML,
+    makeCardFromTemplate,
 }
 
 export interface SourceCard {
@@ -72,7 +73,7 @@ export class Deck {
         this.name = `${namespace}/${deck_name}`
 
         deckMeta.name = deck_name
-        deckMeta.visible = !!fileMeta.ready
+        if (deckMeta.visible === undefined) deckMeta.visible = !!fileMeta.ready
 
         const parentTag = this.tagManager.newDeckTag(this.name, deckMeta)
         this.tagManager.setTag(0, parentTag)

@@ -15,7 +15,7 @@ export const makeCardFromTemplateHTML = (dict: Record<string, string>, html: str
     return html.split(/\s+/g).join(' ')
 }
 
-const makeCardFromTemplate = (dict: Record<string, string>, templateName: string) => {
+export const makeCardFromTemplate = (dict: Record<string, string>, templateName: string) => {
     //let html = fs.readFileSync(`/home/vedantroy/Documents/QKP/templates/${templateName}.html`, 'utf8')
     let html = fs.readFileSync(`/home/robert/Documents/QKP/templates/${templateName}.html`, 'utf8')
     return makeCardFromTemplateHTML(dict, html)
