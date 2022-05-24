@@ -80,12 +80,6 @@ export class Deck {
             tags: this.tagManager.getAllTags(),
             cards: this.cards,
         }
-        /*
-        if (JSON.stringify(yamlObj).toLowerCase().includes('undefined')) {
-            console.error('Some part of yaml is undefined.')
-            console.log(JSON.stringify(yamlObj, null, 2))
-        }
-        */
         try {
             fs.mkdirSync('dist')
         } catch {}
@@ -100,12 +94,10 @@ export class Deck {
 
         this.cards.forEach((c, i) => {
             if ('source' in c) {
-                //fs.writeFileSync(`cards/${(i + '').padStart(4, '0')}-${c.id}.html`, c.source)
                 fs.writeFileSync(`dist/cards/${c.id}.html`, c.source)
                 out.push(`<iframe width="800px" height="800px" src="cards/${(i + '').padStart(4, '0')}-${c.id}.html"></iframe>`)
             }
         })
-        //fs.writeFileSync('all.html', out.join('\n'))
     }
 
     setTag(level: number, name: string) {
@@ -119,23 +111,6 @@ export class Deck {
     }
 }
 
-/*
-export class DeckBuilder {
-    authors: string[] | undefined = undefined
-    modified: string | undefined = undefined
-    version: string | undefined = undefined
-
-    constructor() {}
-
-    setAuthors(authors: string[]) {
-        this.authors = authors
-    }
-
-    build(): Deck {
-        return new Deck()
-    }
-}
-*/
 export class Task<T> {
     name: string
 

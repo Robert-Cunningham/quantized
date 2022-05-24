@@ -19,11 +19,13 @@ export interface TagDecoration {
     description?: string
     flavor?: string
     image?: string
-    price?: string
+    price?: number
     faq?: { question: string; answer: string }[]
     changelog?: { date: string; info: string; version: string }[]
 
     author?: string
+    externalURL?: string
+    permissions?: string
 }
 
 const NO_PARENT = ''
