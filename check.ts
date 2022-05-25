@@ -5,13 +5,16 @@ import fs from 'fs'
 import { decompress } from 'brotli'
 import yaml from 'js-yaml'
 import { YamlFormat } from './types'
+import objectHash from 'object-hash'
 
 export const check = async () => {
     const files = await glob('dist/**.quanta.yaml.br')
 
+    console.log(files)
+
     const out = files.map((path) => {
         const filename = path.split('/').at(-1)!
-        const matched = filename.match(new RegExp(`(?<org>.*)-(?<deck>.*)-v(?<version>.*)-(?<hash>.*).quanta.yaml.br`))
+        const matched = filename.match(new RegExp(`(?<org>.*?)-(?<deck>.*?)-v(?<version>.*)-(?<hash>.*?).quanta.yaml.br`))
 
         if (!matched) {
             console.error(`${path} does not match the naming spec.`)
@@ -37,11 +40,13 @@ export const check = async () => {
                 throw Error(`Multiple files with same version: \n${sorted.map((s) => s.path).join('\n')}`)
             }
 
-            const current = sorted.at(-1)?.path!
-            const last = sorted.at(-2)?.path!
+            const current = sorted.at(-1)
+            const last = sorted.at(-2)
 
-            const currentYaml = yaml.load(decompress(Buffer.from(fs.readFileSync(current, 'utf-8'))).toString()) as YamlFormat
-            const lastYaml = yaml.load(decompress(Buffer.from(fs.readFileSync(last, 'utf-8'))).toString()) as YamlFormat
+            const decoder = new TextDecoder('utf-8')
+
+            const currentYaml = yaml.load(decoder.decode(decompress(fs.readFileSync(current?.path!)))) as YamlFormat
+            const lastYaml = yaml.load(decoder.decode(decompress(fs.readFileSync(last?.path!)))) as YamlFormat
 
             const currrentIDs = currentYaml.cards.map((c) => c.id)
             const lastIDs = lastYaml.cards.map((c) => c.id)
@@ -49,11 +54,28 @@ export const check = async () => {
             const gained = _.difference(currrentIDs, lastIDs).length
             const lost = _.difference(lastIDs, currrentIDs).length
 
-            console.log(`Gained ${gained} and lost ${lost}.`)
-            //const dumped = yaml.dump(yamlObj, { lineWidth: 100000 })
-            //const compressed = compress(Buffer.from(dumped), { mode: 1, quality: 11 })
+            const same = _.intersectionBy(currentYaml.cards, lastYaml.cards, (c) => objectHash(c)).length
+
+            const total = currrentIDs.length
+
+            console.log(
+                `Moving from ${last?.version} to ${current?.version}.
+Gained: ${gained} cards.
+Lost: ${lost} cards.
+Changed: ${total - same} cards.
+Total: ${total} cards.`
+            )
+
+            if (lost > 0) {
+                console.error(
+                    "WARNING: Deleting cards will delete users' scheduling information for those cards. Make sure you're confident in this change."
+                )
+            }
+            if (gained > 0) {
+                console.error(
+                    'WARNING: New cards have no attached scheduling information and will appear as new for all users (even those who have finished the deck, for example).'
+                )
+            }
         })
         .value()
-
-    console.log(sortedByVersion)
 }

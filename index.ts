@@ -82,8 +82,8 @@ export class Deck {
             fs.mkdirSync('dist')
         } catch {}
 
-        const dumped = yaml.dump(yamlObj, { lineWidth: 100000 })
-        const compressed = compress(Buffer.from(dumped), { mode: 1, quality: 11 })
+        const dumped = yaml.dump(yamlObj) //, { lineWidth: 100000 })
+        const compressed = compress(Buffer.from(dumped, 'utf-8'), { mode: 1, quality: 11 })
         const hash = objectHash({ tags: yamlObj.tags, cards: yamlObj.cards })
         fs.writeFileSync(
             `dist/${this.namespace}-${this.deck_name}-v${this.meta.version}-${hash.slice(-4)}.quanta.yaml.br`,
