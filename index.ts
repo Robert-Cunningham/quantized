@@ -6,26 +6,16 @@ import { toID } from './utils'
 import stringify from 'json-stable-stringify'
 import hash from 'object-hash'
 import seedrandom from 'seedrandom'
+import { compress } from 'brotli'
+import objectHash from 'object-hash'
+import semver from 'semver'
+import { Card, Meta, QuantaID } from './types'
 
 export { Tag, TagDecoration }
 
-export interface SourceCard {
-    source: string
-    id: string
-    tags: string[]
-}
+export { check } from './check'
 
-export type Card = SourceCard
-
-export interface Meta {
-    version: string
-    modified?: string
-    ready?: boolean
-}
-
-export type QuantaID = string
-
-export const initSourceCard = (data: { source: string }, id: QuantaID, tags: string[]): Card => {
+const initSourceCard = (data: { source: string }, id: QuantaID, tags: string[]): Card => {
     return {
         source: data.source,
         tags,
@@ -37,12 +27,16 @@ export class Deck {
     tagManager: TagManager
     cards: Card[]
     name: string
+    deck_name: string
+    namespace: string
     meta: Meta
 
     constructor(namespace: string, deck_name: string, human_name: string, fileMeta: Meta, deckMeta: TagDecoration) {
         this.tagManager = new TagManager()
         this.cards = []
         this.name = `${namespace}/${deck_name}`
+        this.deck_name = deck_name
+        this.namespace = namespace
 
         deckMeta.name = deck_name
         if (deckMeta.visible === undefined) deckMeta.visible = !!fileMeta.ready
@@ -55,6 +49,10 @@ export class Deck {
         }
 
         this.meta = fileMeta
+
+        if (!semver.valid(this.meta.version)) {
+            throw Error(`Version ${this.meta.version} is not a valid semver version.`)
+        }
     }
 
     addSourceCard(data: { source: string }, id: QuantaID) {
@@ -73,7 +71,7 @@ export class Deck {
         }
     }
 
-    writeDeck(path?: string) {
+    writeDeck() {
         this.checkNoDupes()
         const yamlObj = {
             meta: this.meta,
@@ -84,17 +82,26 @@ export class Deck {
             fs.mkdirSync('dist')
         } catch {}
 
-        fs.writeFileSync(path || 'dist/quanta.yaml', yaml.dump(yamlObj, { lineWidth: 100000 }))
+        const dumped = yaml.dump(yamlObj, { lineWidth: 100000 })
+        const compressed = compress(Buffer.from(dumped), { mode: 1, quality: 11 })
+        const hash = objectHash({ tags: yamlObj.tags, cards: yamlObj.cards })
+        fs.writeFileSync(
+            `dist/${this.namespace}-${this.deck_name}-v${this.meta.version}-${hash.slice(-4)}.quanta.yaml.br`,
+            compressed
+        )
 
         try {
-            fs.mkdirSync('dist/cards')
+            fs.mkdirSync('debug')
+        } catch {}
+        try {
+            fs.mkdirSync('debug/cards')
         } catch {}
 
         let out: string[] = []
 
         this.cards.forEach((c, i) => {
             if ('source' in c) {
-                fs.writeFileSync(`dist/cards/${c.id}.html`, c.source)
+                fs.writeFileSync(`debug/cards/${c.id}.html`, c.source)
                 out.push(`<iframe width="800px" height="800px" src="cards/${(i + '').padStart(4, '0')}-${c.id}.html"></iframe>`)
             }
         })
